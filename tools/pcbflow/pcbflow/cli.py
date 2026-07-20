@@ -17,6 +17,11 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--target", default="generic")
         if name == "review":
             command.add_argument("--full", action="store_true")
+            command.add_argument(
+                "--visual-approved",
+                action="store_true",
+                help="Confirm that the generated top/bottom renders were manually inspected.",
+            )
 
     release = sub.add_parser("release")
     release.add_argument("--project", required=True, type=Path)
@@ -45,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if not any(g["status"] == "blocked" for g in result["gates"] if g["severity"] == "blocker") else 2
 
     if args.command == "review":
-        run_dir = review(files, args.target, args.full)
+        run_dir = review(files, args.target, args.full, args.visual_approved)
         print(run_dir)
         return 0
 

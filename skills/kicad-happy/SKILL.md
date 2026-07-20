@@ -36,6 +36,23 @@ Before making pin-level or electrical claims, look for manufacturer datasheets o
 
 When a project-local `pcbflow` environment is present, run its `preflight` and `review --full` commands before invoking analyzers manually. Consume the resulting manifest and gate report as the canonical run record; use manual analyzer commands only to debug a failed gate or to run a narrower follow-up. Never infer native DRC success from `kicad-cli` availability alone: require a successful command and report file.
 
+The native DRC gate is strict and deterministic: invoke `kicad-cli pcb drc`
+with `--severity-all --exit-code-violations --refill-zones`, and require both a
+written report and a zero process exit status. A crash, missing report, or any
+violation blocks release.
+
+### 3b. Visual layout review
+
+After placement and routing, render both copper sides and inspect the images
+before release. Use `pcbflow review` when available; it writes
+`visual/board-top.png`, `visual/board-bottom.png`, and
+`visual/layout-audit.json`. The audit is only machine assistance. The human
+review must cover connector orientation, power and high-current paths,
+fan-out and via fields, thermal relief, silkscreen/readability, edge
+clearance, assembly access, and fabrication hazards that DRC cannot express.
+Record approval explicitly with `--visual-approved`. Never infer visual
+approval from a successful router, renderer, or independent analyzer.
+
 Use the existing `kicad` scripts and keep outputs in the configured `analysis/` run directory when possible:
 
 ```bash

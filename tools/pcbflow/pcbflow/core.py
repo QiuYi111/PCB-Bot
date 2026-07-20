@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from .visual import layout_audit, visual_commands
+
 
 def _skill_root(env_name: str, relative_path: str, installed_name: str) -> Path:
     """Resolve a bundled Skill first, then the user's installed Skill."""
@@ -405,7 +407,7 @@ def _write_report(run_dir: Path, manifest: dict[str, Any], gates: list[dict[str,
     (run_dir / "report.md").write_text("\n".join(lines) + "\n")
 
 
-def review(files: ProjectFiles, target: str, full: bool = False) -> Path:
+def review(files: ProjectFiles, target: str, full: bool = False, visual_approved: bool = False) -> Path:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = files.project / "analysis" / "pcbflow" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -474,7 +476,18 @@ def review(files: ProjectFiles, target: str, full: bool = False) -> Path:
 
     if pre["tools"]["kicad-cli"]["available"] and files.pcb:
         drc_output = run_dir / "native-drc.txt"
-        command = [pre["tools"]["kicad-cli"]["path"], "pcb", "drc", "-o", str(drc_output), str(files.pcb)]
+        # Use the strict native gate: include every severity, refill zones
+        # before checking copper, and make violations observable to the
+        # caller through the process exit code.
+        command = [
+            pre["tools"]["kicad-cli"]["path"],
+            "pcb", "drc",
+            "--severity-all",
+            "--exit-code-violations",
+            "--refill-zones",
+            "--output", str(drc_output),
+            str(files.pcb),
+        ]
         commands.append(_run(command, run_dir / "logs", "native_drc"))
         drc_command = commands[-1]
         drc_status = "pass" if drc_output.exists() and drc_command["status"] == "pass" else "failed"
@@ -482,8 +495,38 @@ def review(files: ProjectFiles, target: str, full: bool = False) -> Path:
         if drc_command.get("error"):
             evidence.append(drc_command["error"])
         gates.append({"id": "native_drc", "status": drc_status, "severity": "info" if drc_status == "pass" else "blocker", "evidence": evidence, "recommendation": "Resolve native DRC/tool crash before fabrication." if drc_status != "pass" else ""})
+
+        visual_dir = run_dir / "visual"
+        audit = layout_audit(files.pcb)
+        json_dump(visual_dir / "layout-audit.json", audit)
+        visual_results = []
+        for index, command in enumerate(visual_commands(files.pcb, visual_dir, pre["tools"]["kicad-cli"]["path"])):
+            visual_results.append(_run(command, run_dir / "logs", f"visual_render_{index}"))
+        commands.extend(visual_results)
+        rendered = [visual_dir / "board-top.png", visual_dir / "board-bottom.png"]
+        render_ok = all(result["status"] == "pass" and path.exists() for result, path in zip(visual_results, rendered))
+        if not render_ok:
+            visual_status = "blocked"
+            visual_severity = "blocker"
+            recommendation = "Fix KiCad render failure before human visual inspection."
+        elif visual_approved:
+            visual_status = "pass"
+            visual_severity = "info"
+            recommendation = ""
+        else:
+            visual_status = "review_required"
+            visual_severity = "blocker"
+            recommendation = "Inspect visual/board-top.png and board-bottom.png, then rerun with --visual-approved."
+        gates.append({
+            "id": "visual_layout_review",
+            "status": visual_status,
+            "severity": visual_severity,
+            "evidence": [str(path) for path in rendered] + [str(visual_dir / "layout-audit.json")],
+            "recommendation": recommendation,
+        })
     else:
         gates.append({"id": "native_drc", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli unavailable"], "recommendation": "Install KiCad CLI or run DRC/ERC in KiCad GUI."})
+        gates.append({"id": "visual_layout_review", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli unavailable"], "recommendation": "Install KiCad CLI to render the PCB, then visually inspect it in PCBNew."})
 
     manifest = {
         "tool": "pcbflow",

@@ -119,6 +119,22 @@ kicad-cli pcb export gerbers --help
 kicad-cli sch export pdf --help
 ```
 
+The release gate must run native DRC with all severities enabled, filled zones,
+and a non-zero exit code for violations:
+
+```bash
+kicad-cli pcb drc \
+  --severity-all \
+  --exit-code-violations \
+  --refill-zones \
+  --output analysis/native-drc.txt \
+  generated/board.kicad_pcb
+```
+
+Do not treat the existence of a report as a pass: both the report and the
+command exit status must be checked. If the command crashes or cannot write a
+report, the PCB is blocked from release.
+
 Treat Python, Circuit-Synth, and KiCad CLI as required for generation. Treat ngspice, `gh`, datasheets, and supplier credentials as capability-dependent. If a required item is missing, stop generation/review and report the exact installation gap.
 
 ## Official references

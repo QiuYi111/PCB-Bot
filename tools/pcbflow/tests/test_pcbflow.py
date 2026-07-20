@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 from pcbflow.core import _power_budget_gate, discover_project, release_package, sha256_file
+from pcbflow.visual import layout_audit
 
 
 class PcbflowTests(unittest.TestCase):
@@ -64,6 +65,21 @@ class PcbflowTests(unittest.TestCase):
             self.assertTrue(output.exists())
             with zipfile.ZipFile(output) as archive:
                 self.assertIn("kicad/design.kicad_pcb", archive.namelist())
+
+    def test_layout_audit_counts_octilinear_segments(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pcb = Path(tmp) / "design.kicad_pcb"
+            pcb.write_text('''
+(kicad_pcb (version 20240108) (generator pcbnew)
+  (segment (start 10 10) (end 12 10) (width 0.3) (layer "F.Cu") (net 1))
+  (segment (start 12 10) (end 13 11) (width 0.3) (layer "F.Cu") (net 1))
+)
+''')
+            audit = layout_audit(pcb)
+            self.assertEqual(audit["segments"], 2)
+            self.assertEqual(audit["orientation_counts"]["axis"], 1)
+            self.assertEqual(audit["orientation_counts"]["45deg"], 1)
+            self.assertEqual(audit["corner_counts"]["other"], 1)
 
 
 if __name__ == "__main__":

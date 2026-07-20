@@ -7,6 +7,8 @@ From this directory:
 ```bash
 .venv/bin/pcbflow preflight --project . --target jlcpcb
 .venv/bin/pcbflow review --project . --target jlcpcb --full
+# after opening visual/board-top.png and visual/board-bottom.png:
+.venv/bin/pcbflow review --project . --target jlcpcb --full --visual-approved
 .venv/bin/pcbflow status --run analysis/pcbflow/<run-id>
 .venv/bin/pcbflow release --project . --target jlcpcb
 ```
@@ -19,4 +21,4 @@ Install the editable project command once with:
 uv pip install --python .venv/bin/python -e .
 ```
 
-The tool does not replace KiCad GUI review, native DRC, SPICE, datasheet verification, BOM matching, or manufacturer DFM checks. It makes each handoff explicit and prevents a successful analyzer subprocess from being mistaken for a complete fabrication sign-off.
+The tool does not replace KiCad GUI review, native DRC, SPICE, datasheet verification, BOM matching, or manufacturer DFM checks. Every review renders top and bottom board images and writes `visual/layout-audit.json`; release remains blocked until a human inspects those images and explicitly supplies `--visual-approved`. It makes each handoff explicit and prevents a successful autorouter or analyzer subprocess from being mistaken for a complete fabrication sign-off.

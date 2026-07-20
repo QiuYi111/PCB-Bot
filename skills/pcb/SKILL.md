@@ -30,6 +30,10 @@ Before generation or automated review, prepare the local toolchain. Follow [refe
 4. Do not reimplement KiCad parsing or review logic here. Use `kicad-happy`, which wraps the installed `kicad` Skill and its analyzer scripts.
 5. If a generated project exists, route it through `kicad-happy` before claiming the task is complete. Code execution alone is not design validation.
 6. Preserve evidence boundaries: label results as deterministic, heuristic, consistency-only, or datasheet-backed. Never call a design production-ready when required checks were skipped.
+7. For routed boards, require an octilinear/45-degree-aware routing policy where the backend supports it, then run native DRC and a top/bottom visual review. An autorouter is an implementation aid, not a sign-off authority.
+
+For the routing decision tree and FreeRouting DSN/SES handoff, use
+[references/autorouting.md](references/autorouting.md).
 
 ## Project orchestrator
 
