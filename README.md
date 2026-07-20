@@ -6,7 +6,8 @@ This repository provides a routed PCB workflow for circuit generation, KiCad rev
 pcb (main router)
 ├── circuit-synth (natural language → circuit intent and generated artifacts)
 └── kicad-happy (KiCad/Circuit-Synth review and manufacturing gates)
-    └── installed domain Skills: kicad, datasheets, bom, spice, emc, fabrication
+    ├── spice (automatic analog subcircuit simulation)
+    └── installed domain Skills: kicad, datasheets, bom, emc, fabrication
 ```
 
 ## Repository layout
@@ -14,6 +15,7 @@ pcb (main router)
 - `skills/pcb/` — the main router, toolchain setup chapter, and capability checker.
 - `skills/circuit-synth/` — Circuit-Synth generation workflow and handoff contract.
 - `skills/kicad-happy/` — KiCad review workflow and evidence gates.
+- `skills/spice/` — automatic SPICE testbench generation, simulation, tolerance analysis, and structured reports.
 - `tools/pcbflow/` — reusable project orchestrator for preflight, review, and release packaging.
 - `docs/` — design and implementation records.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "SPICE Simulation"
+  short_description: "Simulate detected analog subcircuits and report results"
+  default_prompt: "Use $spice after schematic analysis to generate and run reproducible SPICE testbenches, then summarize pass, warning, fail, and skip results."

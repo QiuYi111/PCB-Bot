@@ -50,6 +50,20 @@ python3 <kicad-skill-path>/scripts/analyze_gerbers.py gerbers/ --analysis-dir an
 
 Run only the commands supported by the files present, but disclose every skipped or failed applicable check. For a full review, also consider the existing `emc`, `spice`, thermal, lifecycle, datasheet, BOM, and fabrication Skills.
 
+### 3a. Run SPICE when requested or applicable
+
+After `analyze_schematic.py` produces the current schematic JSON, hand off to the `spice` Skill when a simulator is available or when the user explicitly asks for simulation:
+
+```bash
+python3 <spice-skill-path>/scripts/simulate_subcircuits.py \
+  --analysis-dir analysis/ \
+  --simulator ngspice \
+  --monte-carlo 100 \
+  --mc-seed 42
+```
+
+Use Monte Carlo only when component tolerances or a value-spread question matters. Preserve `spice.json`, the generated `.cir` files, and simulator logs in the run directory. Report each result as `pass`, `warn`, `fail`, or `skip`; a successful analyzer run is not a SPICE result. If no simulator is installed, follow the `pcb` toolchain chapter to install ngspice or record the simulation as skipped with the exact gap.
+
 ### 4. Verify findings
 
 Treat analyzer JSON as structured evidence, not the final verdict:
