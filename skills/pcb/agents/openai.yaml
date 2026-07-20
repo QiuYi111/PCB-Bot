@@ -1,0 +1,4 @@
+interface:
+  display_name: "PCB Design Router"
+  short_description: "Route circuit generation and KiCad validation work"
+  default_prompt: "Use $pcb to route this PCB design task to Circuit-Synth generation or KiCad Happy analysis."

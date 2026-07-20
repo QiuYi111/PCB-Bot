@@ -1,0 +1,4 @@
+interface:
+  display_name: "Circuit Synth Generator"
+  short_description: "Generate Circuit-Synth circuits and KiCad projects"
+  default_prompt: "Use $circuit-synth to turn these electrical requirements into Circuit-Synth Python and generated KiCad artifacts."

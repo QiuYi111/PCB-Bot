@@ -1,0 +1,18 @@
+.venv/
+**/.venv/
+__pycache__/
+*.py[cod]
+**/.cache/
+**/.home/
+**/.kicad-config/
+**/.kicad_config/
+**/*.kicad_prl
+**/*.lck
+**/analysis/
+**/generated/
+**/release/
+
+# Concrete local board projects stay in the workspace; reusable Skills/tools are
+# mirrored under skills/ and tools/ for publication.
+24v_stepper_power_board/
+pcb_power_board/

@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcbflow"
+version = "0.1.0"
+description = "Deterministic KiCad PCB review and release orchestration"
+requires-python = ">=3.10"
+
+[project.scripts]
+pcbflow = "pcbflow.cli:main"
+
+[tool.setuptools]
+packages = ["pcbflow"]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "KiCad Happy Reviewer"
+  short_description: "Review KiCad designs and fabrication readiness"
+  default_prompt: "Use $kicad-happy to analyze this KiCad project and produce a traceable design review."
