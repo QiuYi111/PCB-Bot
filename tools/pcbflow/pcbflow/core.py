@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .visual import layout_audit, visual_commands
-from .gui_drc import gui_drc_gate, open_pcb_editor
+from .gui_drc import diagnose_kicad_cli_crash, gui_drc_gate, open_pcb_editor
 
 
 def _skill_root(env_name: str, relative_path: str, installed_name: str) -> Path:
@@ -502,6 +502,7 @@ def review(
         evidence = [str(drc_output), f"command_status={drc_command['status']}"]
         if drc_command.get("error"):
             evidence.append(drc_command["error"])
+        evidence.extend(diagnose_kicad_cli_crash(drc_command))
         native_gate = {"id": "native_drc", "status": drc_status, "severity": "info" if drc_status == "pass" else "blocker", "evidence": evidence, "recommendation": "Resolve native DRC/tool crash before fabrication." if drc_status != "pass" else ""}
         gates.append(native_gate)
         if drc_status != "pass":

@@ -6,6 +6,8 @@ On this macOS host, KiCad 10.0.4 `kicad-cli pcb drc --refill-zones` exits with c
 
 This is a GUI-dependent zone-fill abort in the CLI process, not a normal DRC violation result. The workflow therefore remains strict:
 
+Testing both arm64 and x86_64 execution paths, multiple DRC severity/format options, and KiCad 10.0.5 RC1 reproduced the same exit 134. This rules out Rosetta, the board's DRC severity set, and the stable-versus-RC package as immediate workarounds. The defect is upstream in the macOS DRC job path.
+
 1. Run CLI DRC first.
 2. If it crashes, open PCB Editor with `pcbflow review --open-gui-drc`.
 3. In PCB Editor enable “refill all zones before DRC”, run DRC, and save the report.

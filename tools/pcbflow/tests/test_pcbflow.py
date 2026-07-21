@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pcbflow.core import _power_budget_gate, discover_project, release_package, sha256_file
 from pcbflow.visual import layout_audit
-from pcbflow.gui_drc import gui_drc_gate, parse_drc_report
+from pcbflow.gui_drc import diagnose_kicad_cli_crash, gui_drc_gate, parse_drc_report
 
 
 class PcbflowTests(unittest.TestCase):
@@ -88,6 +88,9 @@ class PcbflowTests(unittest.TestCase):
             report.write_text("** Found 0 DRC violations **\n** Found 0 unconnected pads **\n** Found 0 Footprint errors **\n")
             self.assertEqual(parse_drc_report(report)["status"], "pass")
             self.assertEqual(gui_drc_gate(report)["status"], "pass")
+
+    def test_cli_abort_is_diagnosed(self):
+        self.assertTrue(any("exit_code=134" in item for item in diagnose_kicad_cli_crash({"returncode": 134})))
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import glob
 from pathlib import Path
 from typing import Any
 
@@ -53,3 +54,18 @@ def gui_drc_gate(report: Path) -> dict[str, Any]:
         "evidence": [str(report), f"violations={result['violations']}", f"unconnected_pads={result['unconnected_pads']}", f"footprint_errors={result['footprint_errors']}"],
         "recommendation": "Resolve GUI DRC findings before fabrication." if result["status"] != "pass" else "",
     }
+
+
+def diagnose_kicad_cli_crash(result: dict[str, Any]) -> list[str]:
+    """Return evidence for the known macOS wx zone-fill abort."""
+    if result.get("returncode") != 134:
+        return []
+    evidence = ["exit_code=134 (SIGABRT)"]
+    reports = sorted(glob.glob(str(Path.home() / "Library/Logs/DiagnosticReports/kicad-cli-*.ips")))
+    if reports:
+        latest = Path(reports[-1])
+        evidence.append(str(latest))
+        text = latest.read_text(encoding="utf-8", errors="replace")
+        if "wxGetMousePosition" in text or "mouseLocation" in text:
+            evidence.append("crash_stack=wxGetMousePosition/mouseLocation during zone fill")
+    return evidence
