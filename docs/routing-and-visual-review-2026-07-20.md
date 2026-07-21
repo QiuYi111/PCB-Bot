@@ -60,14 +60,22 @@ The remaining independent warnings are zero test-point coverage and untented
 via-in-pad findings at `C15:2` and `R4:2`; they require an engineering or
 fabrication decision rather than automatic suppression.
 
-## DRC environment blocker
+## DRC retry result
 
 On the current macOS installation, `kicad-cli` is KiCad 10.0.4. Running the
-strict native DRC command exits with code 134 before writing a report. The
-same behavior was reproduced on the installed KiCad template board and on a
-minimal one-pad board, so this run cannot be presented as either a DRC pass or
-a board-specific violation list.
+strict native DRC command still exits with code 134 before writing a report;
+the same behavior was reproduced on the installed KiCad template board.
 
-Before fabrication, unlock the Mac and run DRC in PCB Editor after refill and
-save, or rerun the strict CLI gate with a different supported KiCad build.
-Only a written report plus zero exit status may change this gate to pass.
+PCB Editor DRC was then run with refill enabled and completed successfully.
+It reports **229 DRC violations**, **18 unconnected pads**, and **0 footprint
+errors**. The findings include different-net shorts, clearance violations,
+tracks crossing, dangling tracks/vias, drill/hole issues, solder-mask
+bridges, and silkscreen collisions. This candidate therefore fails native DRC
+and must not be released.
+
+The GUI report is saved locally as
+`pcb_power_board/generated/24v_stepper_power_board/native-drc-gui-20260721.rpt`.
+Fix the reported shorts, clearances, unconnected items, and fabrication
+findings, then rerun PCB Editor DRC and the strict CLI gate with a supported
+KiCad build. Only a written report with zero violations may change this gate
+to pass.
