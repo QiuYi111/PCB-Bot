@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .visual import layout_audit, visual_commands
+from .gui_drc import gui_drc_gate, open_pcb_editor
 
 
 def _skill_root(env_name: str, relative_path: str, installed_name: str) -> Path:
@@ -407,7 +408,14 @@ def _write_report(run_dir: Path, manifest: dict[str, Any], gates: list[dict[str,
     (run_dir / "report.md").write_text("\n".join(lines) + "\n")
 
 
-def review(files: ProjectFiles, target: str, full: bool = False, visual_approved: bool = False) -> Path:
+def review(
+    files: ProjectFiles,
+    target: str,
+    full: bool = False,
+    visual_approved: bool = False,
+    gui_drc_report: Path | None = None,
+    open_gui_drc: bool = False,
+) -> Path:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = files.project / "analysis" / "pcbflow" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -494,7 +502,25 @@ def review(files: ProjectFiles, target: str, full: bool = False, visual_approved
         evidence = [str(drc_output), f"command_status={drc_command['status']}"]
         if drc_command.get("error"):
             evidence.append(drc_command["error"])
-        gates.append({"id": "native_drc", "status": drc_status, "severity": "info" if drc_status == "pass" else "blocker", "evidence": evidence, "recommendation": "Resolve native DRC/tool crash before fabrication." if drc_status != "pass" else ""})
+        native_gate = {"id": "native_drc", "status": drc_status, "severity": "info" if drc_status == "pass" else "blocker", "evidence": evidence, "recommendation": "Resolve native DRC/tool crash before fabrication." if drc_status != "pass" else ""}
+        gates.append(native_gate)
+        if drc_status != "pass":
+            if open_gui_drc:
+                try:
+                    gui_command = open_pcb_editor(files.pcb)
+                    commands.append({"name": "open_pcb_editor", "command": gui_command, "status": "pass", "returncode": 0, "elapsed_s": 0, "error": None})
+                except OSError as exc:
+                    commands.append({"name": "open_pcb_editor", "command": [], "status": "blocked", "returncode": None, "elapsed_s": 0, "error": str(exc)})
+            if gui_drc_report:
+                fallback_gate = gui_drc_gate(gui_drc_report)
+                gates.append(fallback_gate)
+                if fallback_gate["status"] == "pass":
+                    native_gate["status"] = "pass_via_gui_fallback"
+                    native_gate["severity"] = "info"
+                    native_gate["recommendation"] = ""
+                    native_gate["evidence"].append("CLI failed; clean PCB Editor DRC report accepted as fallback")
+            else:
+                gates.append({"id": "native_drc_gui_fallback", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli failed or crashed"], "recommendation": "Run `pcbflow review --open-gui-drc`, execute PCB Editor DRC with refill enabled, save the report, then rerun with --gui-drc-report PATH."})
 
         visual_dir = run_dir / "visual"
         audit = layout_audit(files.pcb)
@@ -526,6 +552,10 @@ def review(files: ProjectFiles, target: str, full: bool = False, visual_approved
         })
     else:
         gates.append({"id": "native_drc", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli unavailable"], "recommendation": "Install KiCad CLI or run DRC/ERC in KiCad GUI."})
+        if gui_drc_report:
+            gates.append(gui_drc_gate(gui_drc_report))
+        else:
+            gates.append({"id": "native_drc_gui_fallback", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli unavailable"], "recommendation": "Run PCB Editor DRC and pass --gui-drc-report PATH."})
         gates.append({"id": "visual_layout_review", "status": "blocked", "severity": "blocker", "evidence": ["kicad-cli unavailable"], "recommendation": "Install KiCad CLI to render the PCB, then visually inspect it in PCBNew."})
 
     manifest = {

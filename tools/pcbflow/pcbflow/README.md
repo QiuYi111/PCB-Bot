@@ -7,6 +7,9 @@ From this directory:
 ```bash
 .venv/bin/pcbflow preflight --project . --target jlcpcb
 .venv/bin/pcbflow review --project . --target jlcpcb --full
+# if kicad-cli crashes during zone refill, open PCB Editor and save a DRC report:
+.venv/bin/pcbflow review --project . --target jlcpcb --open-gui-drc
+.venv/bin/pcbflow review --project . --target jlcpcb --gui-drc-report /path/to/native-drc-gui.rpt
 # after opening visual/board-top.png and visual/board-bottom.png:
 .venv/bin/pcbflow review --project . --target jlcpcb --full --visual-approved
 .venv/bin/pcbflow status --run analysis/pcbflow/<run-id>

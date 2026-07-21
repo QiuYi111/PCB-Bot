@@ -22,6 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
                 action="store_true",
                 help="Confirm that the generated top/bottom renders were manually inspected.",
             )
+            command.add_argument("--gui-drc-report", type=Path, help="Saved KiCad PCB Editor DRC report used only after CLI failure.")
+            command.add_argument("--open-gui-drc", action="store_true", help="Open PCB Editor when CLI DRC fails; save the DRC report manually.")
 
     release = sub.add_parser("release")
     release.add_argument("--project", required=True, type=Path)
@@ -50,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if not any(g["status"] == "blocked" for g in result["gates"] if g["severity"] == "blocker") else 2
 
     if args.command == "review":
-        run_dir = review(files, args.target, args.full, args.visual_approved)
+        run_dir = review(files, args.target, args.full, args.visual_approved, args.gui_drc_report, args.open_gui_drc)
         print(run_dir)
         return 0
 

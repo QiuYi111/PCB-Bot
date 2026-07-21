@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pcbflow.core import _power_budget_gate, discover_project, release_package, sha256_file
 from pcbflow.visual import layout_audit
+from pcbflow.gui_drc import gui_drc_gate, parse_drc_report
 
 
 class PcbflowTests(unittest.TestCase):
@@ -80,6 +81,13 @@ class PcbflowTests(unittest.TestCase):
             self.assertEqual(audit["orientation_counts"]["axis"], 1)
             self.assertEqual(audit["orientation_counts"]["45deg"], 1)
             self.assertEqual(audit["corner_counts"]["other"], 1)
+
+    def test_gui_drc_report_is_passed_only_when_clean(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "drc.rpt"
+            report.write_text("** Found 0 DRC violations **\n** Found 0 unconnected pads **\n** Found 0 Footprint errors **\n")
+            self.assertEqual(parse_drc_report(report)["status"], "pass")
+            self.assertEqual(gui_drc_gate(report)["status"], "pass")
 
 
 if __name__ == "__main__":
